@@ -1,0 +1,61 @@
+import time
+import matplotlib.pyplot as plt
+from simple_pid import PID
+import numpy as np
+
+class ErrorPid:
+    """
+    Simple simulation of a water boiler which can heat up water
+    and where the heat dissipates slowly over time
+    """
+
+    def __init__(self):
+        self.current_state = 20
+        self.x_axis, self.y_axis, self.setpoint = [], [], []
+        self.time_step = 0.00001
+        # self.pid = PID(5, 0.01, 0.1, setpoint=self.current_state)
+        # self.pid.output_limits = (0, 100)
+
+    def update(self, goal, time_interval, pid):
+        # if boiler_power > 0:
+            # boiler can only produce heat, not cold
+        iter, num = time_interval / self.time_step, 1
+        if len(self.x_axis):
+            x_end = self.x_axis[-1]
+        else:
+            x_end = 0
+        # print(pid.setpoint)
+        while num <= iter:
+            gap = goal - self.current_state
+            power = pid(-abs(gap)) * np.sign(gap)
+            # print(self.current_state)
+            self.current_state += 1 * power * self.time_step
+            self.x_axis += [x_end + num * self.time_step]
+            self.y_axis += [self.current_state]
+            self.setpoint += [goal]
+            num += 1
+
+        # some heat dissipation
+        # self.current_state -= 0.02 * abs(dt)
+        # return self.current_state
+
+    def reset(self):
+        self.x_axis, self.y_axis, self.setpoint = [], [], []
+
+    def plt_fig(self):
+        plt.plot(self.x_axis, self.y_axis, label='measured')
+        plt.plot(self.x_axis, self.setpoint, label='target')
+        plt.xlabel('time')
+        plt.ylabel('goal')
+        plt.legend()
+        plt.show()
+
+
+if __name__ == '__main__':
+    E = ErrorPid()
+    pid = PID(5, 0.01, 0.1, setpoint=0)
+    pid.output_limits = (0, 100)
+    E.update(100, 4, pid)
+    E.update(20, 4, pid)
+    E.plt_fig()
+
